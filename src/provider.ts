@@ -1,44 +1,16 @@
-import { WindowPostMessageProxy } from '@ont-community/window-post-message-proxy';
-import { browser } from 'webextension-polyfill-ts';
-import { DApi } from './api';
-import { MethodType, Rpc } from './rpc/rpc';
+import { DApi } from './api/index';
 
-let rpc: Rpc;
+// tslint:disable:ban-types
 
-export function registerContentProxy({
-  logMessages = false,
-  logWarnings = false
-}: {
-  logMessages?: boolean;
-  logWarnings?: boolean;
-}) {
-  const windowPostMessageProxy = new WindowPostMessageProxy({
-    logMessages,
-    suppressWarnings: !logWarnings,
-    name: 'content-script',
-    target: 'page'
-  });
+export function createProviderRouter({ provider }: { provider: DApi }) {
+  const methods: Map<string, Function> = new Map();
 
-  windowPostMessageProxy.addHandler({
-    handle: (msg) => browser.runtime.sendMessage(msg),
-    test: (msg) => msg.type === 'dAPI.js'
-  });
-}
-
-export function registerProvider({ provider, logMessages }: { provider: DApi; logMessages: boolean }) {
-  rpc = new Rpc({
-    source: 'background',
-    destination: 'page',
-    logMessages,
-    addListener: browser.runtime.onMessage.addListener
-  });
-
-  function checkedRegister(name: string, method: MethodType | undefined) {
+  function checkedRegister(name: string, method: Function | undefined) {
     if (method === undefined) {
       throw new Error('DApi provider does not implement ' + name);
     }
 
-    rpc.register(name, method);
+    methods.set(name, method);
   }
 
   checkedRegister('asset.getAccount', provider.asset.getAccount);
@@ -83,4 +55,29 @@ export function registerProvider({ provider, logMessages }: { provider: DApi; lo
   checkedRegister('smartContract.deploy', provider.smartContract.deploy);
 
   checkedRegister('provider.getProvider', provider.provider.getProvider);
+
+  return async (request: any, response: any) => {
+    const body = request.body;
+
+    if (body === undefined) {
+      throw new Error('Request does not contain body.');
+    }
+
+    const methodName = body.method;
+    const params = body.params;
+
+    if (methodName === undefined) {
+      throw new Error('Request body does not contain method.');
+    }
+
+    const method = methods.get(methodName);
+
+    if (method === undefined) {
+      throw new Error(`DApi provider does not implement method '${methodName}'.`);
+    }
+
+    const result = await method(...params);
+
+    response.status(200).send({ result });
+  };
 }
