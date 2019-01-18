@@ -1,5 +1,5 @@
 {
-  "name": "ontology-dapi",
+  "name": "ontology-dapi-desktop",
   "version": "1.0.0",
   "description": "",
   "main": "./lib/index.js",
@@ -26,12 +26,12 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "git://github.com/OntologyCommunityDevelopers/ontology-dapi"
+    "url": "git://github.com/backslash47/ontology-dapi-desktop"
   },
   "bugs": {
-    "url": "https://github.com/OntologyCommunityDevelopers/ontology-dapi/issues"
+    "url": "https://github.com/backslash47/ontology-dapi-desktop/issues"
   },
-  "homepage": "https://github.com/OntologyCommunityDevelopers/ontology-dapi",
+  "homepage": "https://github.com/backslash47/ontology-dapi-desktop",
   "devDependencies": {
     "@types/bs58": "^3.0.30",
     "@types/crypto-js": "^3.1.43",
